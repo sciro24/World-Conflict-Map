@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo } from "react"
 import { RiskMap } from "@/components/map/RiskMap"
 import { fetchConflictData, type ConflictEvent } from "@/lib/gdelt"
-import { RefreshCw, AlertTriangle, Clock, MapPin, ExternalLink, Filter, SortAsc, Swords, Megaphone, Zap, Skull, ShieldAlert, Flame, ChevronLeft, ChevronRight } from "lucide-react"
+import { RefreshCw, AlertTriangle, Clock, MapPin, ExternalLink, Filter, SortAsc, Swords, Megaphone, Zap, Skull, ShieldAlert, Flame, ChevronLeft, ChevronRight, Plus, Minus } from "lucide-react"
 
 // Event type configuration
 const EVENT_TYPES = {
@@ -37,6 +37,11 @@ export default function Home() {
   }
 
   useEffect(() => {
+    // Check screen size for sidebar
+    if (window.innerWidth < 768) {
+      setIsSidebarOpen(false)
+    }
+
     // Initial fetch
     loadData()
     const interval = setInterval(loadData, 5 * 60 * 1000)
@@ -319,6 +324,24 @@ export default function Home() {
           {isSidebarOpen ? <ChevronLeft className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
         </button>
 
+        {/* Zoom Controls */}
+        <div className="absolute bottom-6 right-6 z-50 flex flex-col gap-2">
+          <button
+            onClick={() => setMapZoom(z => Math.min(z * 1.5, 8))}
+            className="p-2 bg-black/80 backdrop-blur text-white border border-white/20 rounded-lg hover:bg-white/10 transition-colors shadow-lg"
+            title="Zoom In"
+          >
+            <Plus className="w-5 h-5" />
+          </button>
+          <button
+            onClick={() => setMapZoom(z => Math.max(z / 1.5, 1))}
+            className="p-2 bg-black/80 backdrop-blur text-white border border-white/20 rounded-lg hover:bg-white/10 transition-colors shadow-lg"
+            title="Zoom Out"
+          >
+            <Minus className="w-5 h-5" />
+          </button>
+        </div>
+
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-slate-900/50 via-black to-black pointer-events-none z-0" />
         <RiskMap
           conflicts={conflicts}
@@ -344,7 +367,7 @@ export default function Home() {
         </div>
 
         {/* Status */}
-        <div className="absolute bottom-6 right-6 z-10 flex flex-col gap-2">
+        <div className="absolute bottom-6 left-6 z-10 flex flex-col gap-2">
           <div className="bg-black/60 backdrop-blur px-4 py-2 rounded-full border border-white/10 text-xs font-mono text-white/50 flex items-center gap-2">
             <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
             UPLINK: ACTIVE
