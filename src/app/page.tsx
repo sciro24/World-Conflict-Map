@@ -52,7 +52,12 @@ export default function Home() {
 
     // Sort
     if (sortBy === "date") {
-      filtered.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      // Sort by START DATE (Newest started = Top, Longest running = Bottom)
+      filtered.sort((a, b) => {
+        const dateA = a.startDate ? new Date(a.startDate).getTime() : new Date(a.date).getTime();
+        const dateB = b.startDate ? new Date(b.startDate).getTime() : new Date(b.date).getTime();
+        return dateB - dateA;
+      });
     } else if (sortBy === "type") {
       const typeOrder = ["conflict", "civil_war", "terrorism", "cyber", "protest"];
       filtered.sort((a, b) => typeOrder.indexOf(a.eventType) - typeOrder.indexOf(b.eventType));
@@ -192,76 +197,89 @@ export default function Home() {
               {displayedEvents.map((c, i) => (
                 <div
                   key={c.id || i}
-                  className={`p-3 hover:bg-white/5 transition-colors cursor-pointer group ${selectedConflictId === c.id ? 'bg-red-500/20 border-l-2 border-red-500' : ''
+                  className={`p-4 mb-3 hover:bg-white/5 transition-all duration-200 cursor-pointer group rounded-xl border ${selectedConflictId === c.id
+                      ? 'bg-red-950/20 border-red-500 shadow-[0_0_20px_rgba(239,68,68,0.1)]'
+                      : 'bg-black/20 border-white/5 hover:border-white/10'
                     }`}
                   onClick={() => handleConflictClick(c)}
                 >
                   {/* Header Row */}
-                  <div className="flex items-start justify-between mb-1.5">
-                    <div className="flex items-center gap-2">
-                      <div className="p-1 rounded bg-white/5 border border-white/10">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      <div className={`p-2 rounded-lg border border-white/10 ${selectedConflictId === c.id ? 'bg-red-500/20' : 'bg-white/5'}`}>
                         {(() => {
                           const Icon = getEventIcon(c.eventType);
-                          return <Icon className="w-3 h-3" style={{ color: c.color }} />;
+                          return <Icon className="w-4 h-4" style={{ color: c.color }} />;
                         })()}
                       </div>
-                      <span className="font-bold text-white text-xs truncate max-w-[160px]">
-                        {c.actor2Name || "Unknown Location"}
-                      </span>
+                      <div>
+                        <div className="font-bold text-gray-200 text-sm leading-tight max-w-[180px]">
+                          {c.actor2Name || "Unknown Location"}
+                        </div>
+                        <div className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold mt-0.5">
+                          {c.label}
+                        </div>
+                      </div>
                     </div>
-                    <span
-                      className="px-1.5 py-0.5 rounded text-[8px] font-bold uppercase"
-                      style={{
-                        backgroundColor: `${c.color}30`,
-                        color: c.color
-                      }}
-                    >
-                      {c.label}
-                    </span>
                   </div>
 
-                  {/* Info */}
-                  <div className="space-y-1 text-[10px]">
-                    <div className="flex items-center gap-2 text-gray-400">
-                      <span className="text-gray-500">From:</span>
-                      <span className="text-white font-medium truncate">
-                        {c.actor1Name || "Unknown"}
+                  {/* Info Block */}
+                  <div className="space-y-2">
+                    {/* Actors */}
+                    <div className="flex items-center gap-2 text-xs bg-white/5 p-2 rounded border border-white/5">
+                      <span className="text-gray-500">Source:</span>
+                      <span className="text-white font-medium truncate flex-1">
+                        {c.actor1Name || "Unknown Force"}
                       </span>
                     </div>
 
-                    {/* Casualties & Duration */}
-                    <div className="flex items-center justify-between gap-2 mt-2 pt-2 border-t border-white/5">
-                      <div className="flex items-center gap-2">
-                        {c.casualties && (
-                          <span className="flex items-center gap-1 text-red-500 font-bold bg-red-500/10 px-1.5 py-0.5 rounded">
-                            <Skull className="w-3 h-3" />
-                            {c.casualties}
-                          </span>
-                        )}
-                        {c.duration && (
-                          <span className="text-yellow-500/80 font-mono text-[9px]">
-                            {c.duration}
-                          </span>
-                        )}
+                    {/* Stats Grid */}
+                    <div className="grid grid-cols-2 gap-2 mt-2">
+                      {/* Casualties Block - HIGHLIGHTED */}
+                      {c.casualties ? (
+                        <div className="flex flex-col justify-center px-3 py-2 bg-red-950/30 border border-red-500/30 rounded text-center">
+                          <div className="flex items-center justify-center gap-1.5 text-red-500 mb-0.5">
+                            <Skull className="w-4 h-4" />
+                            <span className="font-black text-sm">{c.casualties}</span>
+                          </div>
+                          <span className="text-[9px] text-red-400/70 uppercase font-bold tracking-wide">Casualties</span>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col justify-center px-3 py-2 bg-white/5 border border-white/5 rounded text-center opacity-50">
+                          <span className="text-gray-400 text-xs">-</span>
+                          <span className="text-[9px] text-gray-600 uppercase font-bold">No Casualties</span>
+                        </div>
+                      )}
+
+                      {/* Duration Block */}
+                      <div className="flex flex-col justify-center px-3 py-2 bg-white/5 border border-white/5 rounded text-center">
+                        <span className="text-yellow-500 font-mono text-xs font-bold">
+                          {c.duration || "New"}
+                        </span>
+                        <span className="text-[9px] text-gray-500 uppercase font-bold tracking-wide">Duration</span>
                       </div>
-                      <span className="text-gray-600">
-                        {formatEventDate(c.date)}
-                      </span>
                     </div>
 
-                    {/* Link */}
-                    {c.sourceUrl && (
-                      <a
-                        href={c.sourceUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-1 text-[9px] text-blue-500/60 hover:text-blue-400 w-fit pt-1"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <ExternalLink className="w-2.5 h-2.5" />
-                        <span>Source</span>
-                      </a>
-                    )}
+                    {/* Footer: Date & Source */}
+                    <div className="flex items-center justify-between pt-2 border-t border-white/5 mt-1">
+                      <div className="flex items-center gap-1.5 text-gray-500 text-[10px]">
+                        <Clock className="w-3 h-3" />
+                        <span>Updated: {formatEventDate(c.date)}</span>
+                      </div>
+
+                      {c.sourceUrl && (
+                        <a
+                          href={c.sourceUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1 text-[10px] text-blue-400/80 hover:text-blue-400 transition-colors"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <span>Source Report</span>
+                          <ExternalLink className="w-2.5 h-2.5" />
+                        </a>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
