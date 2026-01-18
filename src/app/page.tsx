@@ -110,6 +110,9 @@ export default function Home() {
           <p className="text-xs text-muted-foreground mt-1">
             Real-time Global Event Monitor
           </p>
+          <p className="text-[10px] text-gray-600 mt-0.5">
+            Made by Diego Scirocco
+          </p>
         </div>
 
         {/* Stats Bar */}
@@ -198,8 +201,8 @@ export default function Home() {
                 <div
                   key={c.id || i}
                   className={`p-4 mb-3 hover:bg-white/5 transition-all duration-200 cursor-pointer group rounded-xl border ${selectedConflictId === c.id
-                      ? 'bg-red-950/20 border-red-500 shadow-[0_0_20px_rgba(239,68,68,0.1)]'
-                      : 'bg-black/20 border-white/5 hover:border-white/10'
+                    ? 'bg-red-950/20 border-red-500 shadow-[0_0_20px_rgba(239,68,68,0.1)]'
+                    : 'bg-black/20 border-white/5 hover:border-white/10'
                     }`}
                   onClick={() => handleConflictClick(c)}
                 >
