@@ -2,7 +2,7 @@
 
 # 🎯 RISIKO IRL
 
-### Real-Time Global Conflict Monitor & War Simulation
+### Real-Time Global Conflict Monitor
 
 [![Next.js](https://img.shields.io/badge/Next.js-16.1.3-black?style=for-the-badge&logo=next.js&logoColor=white)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-19.2.3-61DAFB?style=for-the-badge&logo=react&logoColor=white)](https://react.dev/)
