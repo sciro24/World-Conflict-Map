@@ -10,7 +10,6 @@
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4.0-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 
-*Transform real-time geopolitical data into a Risk-style board game visualization*
 
 [Live Demo](#-Overview) • [Features](#-features) • [Installation](#-installation) • [Tech Stack](#-tech-stack) • [API](#-api)
 
