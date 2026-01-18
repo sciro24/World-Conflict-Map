@@ -3,133 +3,180 @@ import axios from 'axios';
 
 // GDELT API endpoints
 const GDELT_DOC_API = "https://api.gdeltproject.org/api/v2/doc/doc";
+const GDELT_GEO_API = "https://api.gdeltproject.org/api/v2/geo/geo";
+
+// Event types with their GDELT themes
+const EVENT_TYPES = {
+    conflict: {
+        themes: "theme:ARMEDCONFLICT OR theme:MILITARY_ATTACK OR theme:WAR",
+        geoTheme: "theme:ARMEDCONFLICT",
+        color: "#ef4444", // Red
+        label: "Armed Conflict"
+    },
+    protest: {
+        themes: "theme:PROTEST OR theme:CIVIL_UNREST",
+        geoTheme: "theme:PROTEST",
+        color: "#f59e0b", // Amber
+        label: "Protest"
+    },
+    cyber: {
+        themes: "theme:CYBER_ATTACK OR theme:HACKING",
+        geoTheme: "theme:CYBER_ATTACK",
+        color: "#3b82f6", // Blue
+        label: "Cyber Attack"
+    },
+    terrorism: {
+        themes: "theme:TERROR OR theme:TERRORISM OR theme:EXTREMISM",
+        geoTheme: "theme:TERROR",
+        color: "#a855f7", // Purple
+        label: "Terrorism"
+    }
+};
+
+type EventType = keyof typeof EVENT_TYPES;
 
 export async function GET() {
     try {
-        // Get conflict events with details
-        const docResponse = await axios.get(GDELT_DOC_API, {
-            params: {
-                query: "theme:ARMEDCONFLICT OR theme:MILITARY_ATTACK OR theme:WAR",
-                mode: "artlist",
-                format: "json",
-                maxrecords: 100, // Get more to filter
-                sort: "datedesc",
-            },
-            timeout: 10000,
+        const allEvents: any[] = [];
+
+        // Fetch events for each type in parallel
+        const fetchPromises = (Object.keys(EVENT_TYPES) as EventType[]).map(async (eventType) => {
+            const config = EVENT_TYPES[eventType];
+
+            try {
+                // Get articles with details
+                const [docResponse, geoResponse] = await Promise.all([
+                    axios.get(GDELT_DOC_API, {
+                        params: {
+                            query: config.themes,
+                            mode: "artlist",
+                            format: "json",
+                            maxrecords: 30,
+                            sort: "datedesc",
+                        },
+                        timeout: 8000,
+                    }),
+                    axios.get(GDELT_GEO_API, {
+                        params: {
+                            query: config.geoTheme,
+                            format: "geojson",
+                            timespan: "24h",
+                            maxpoints: 30,
+                        },
+                        timeout: 8000,
+                    })
+                ]);
+
+                const geoFeatures = geoResponse.data?.features || [];
+                const articles = docResponse.data?.articles || [];
+                const seenLocations = new Set<string>();
+
+                for (let i = 0; i < geoFeatures.length && i < 15; i++) {
+                    const f = geoFeatures[i];
+                    const coords = f.geometry?.coordinates || [0, 0];
+                    const props = f.properties || {};
+                    const matchingArticle = articles[i] || {};
+
+                    const title = matchingArticle.title || props.name || "";
+                    const locationName = props.name || props.featurename || "Unknown Location";
+
+                    // Skip duplicate locations
+                    const locationKey = `${eventType}-${Math.round(coords[0])},${Math.round(coords[1])}`;
+                    if (seenLocations.has(locationKey)) continue;
+                    seenLocations.add(locationKey);
+
+                    // Extract actor info
+                    const targetCountry = extractCountryFromLocation(locationName);
+                    const aggressorInfo = extractAggressorFromTitle(title, targetCountry, eventType);
+
+                    // Parse date
+                    let eventDate = matchingArticle.seendate || props.date;
+                    if (eventDate) {
+                        eventDate = parseGdeltDate(eventDate);
+                    } else {
+                        const hoursAgo = Math.floor(Math.random() * 24);
+                        const pastDate = new Date();
+                        pastDate.setHours(pastDate.getHours() - hoursAgo);
+                        eventDate = pastDate.toISOString();
+                    }
+
+                    // Extract casualties from title (rough estimation)
+                    const casualties = extractCasualties(title);
+
+                    // Calculate angle for conflicts
+                    const originLat = coords[1] + (Math.random() - 0.5) * 5;
+                    const originLon = coords[0] + (Math.random() - 0.5) * 5;
+                    const angle = calculateAngle(originLat, originLon, coords[1], coords[0]);
+
+                    allEvents.push({
+                        id: `${eventType}-${i}-${Date.now()}`,
+                        source: "GDELT",
+                        eventType: eventType,
+                        lat: coords[1],
+                        lon: coords[0],
+                        actor1Name: aggressorInfo.name,
+                        actor1Code: aggressorInfo.code,
+                        actor2Name: targetCountry || locationName,
+                        sourceUrl: matchingArticle.url || props.url || "",
+                        date: eventDate,
+                        angle: angle,
+                        goldstein: matchingArticle.tone ? parseFloat(matchingArticle.tone) * -1 : -5,
+                        title: title,
+                        casualties: casualties,
+                        color: config.color,
+                        label: config.label,
+                    });
+                }
+            } catch (err) {
+                console.error(`Error fetching ${eventType}:`, err);
+            }
         });
 
-        // Get geo data for coordinates
-        const geoResponse = await axios.get("https://api.gdeltproject.org/api/v2/geo/geo", {
-            params: {
-                query: "theme:ARMEDCONFLICT",
-                format: "geojson",
-                timespan: "24h",
-                maxpoints: 100,
-            },
-            timeout: 10000,
-        });
+        await Promise.all(fetchPromises);
 
-        const geoFeatures = geoResponse.data?.features || [];
-        const articles = docResponse.data?.articles || [];
-
-        // Process and filter conflicts
-        const processedFeatures: any[] = [];
-        const seenLocations = new Set<string>();
-
-        for (let i = 0; i < geoFeatures.length && processedFeatures.length < 50; i++) {
-            const f = geoFeatures[i];
-            const coords = f.geometry?.coordinates || [0, 0];
-            const props = f.properties || {};
-
-            const matchingArticle = articles[i] || {};
-            const title = matchingArticle.title || props.name || "";
-            const locationName = props.name || props.featurename || "Unknown Location";
-
-            // Extract target country from location
-            const targetCountry = extractCountryFromLocation(locationName);
-
-            // Extract aggressor from title - must be DIFFERENT from target
-            const aggressorInfo = extractAggressorFromTitle(title, targetCountry);
-
-            // Skip if:
-            // 1. Aggressor and target are the same
-            // 2. No clear aggressor found
-            // 3. Aggressor is generic
-            if (!aggressorInfo.name ||
-                aggressorInfo.name === targetCountry ||
-                aggressorInfo.name === "Armed Forces" ||
-                aggressorInfo.name.includes(targetCountry)) {
-                continue;
-            }
-
-            // Skip duplicate locations
-            const locationKey = `${Math.round(coords[0])},${Math.round(coords[1])}`;
-            if (seenLocations.has(locationKey)) continue;
-            seenLocations.add(locationKey);
-
-            // Get event date
-            let eventDate = matchingArticle.seendate || props.date;
-            if (eventDate) {
-                eventDate = parseGdeltDate(eventDate);
-            } else {
-                // Generate realistic past time
-                const hoursAgo = Math.floor(Math.random() * 24);
-                const pastDate = new Date();
-                pastDate.setHours(pastDate.getHours() - hoursAgo);
-                pastDate.setMinutes(Math.floor(Math.random() * 60));
-                eventDate = pastDate.toISOString();
-            }
-
-            // Calculate angle from aggressor direction
-            const originLat = coords[1] + (Math.random() - 0.5) * 8;
-            const originLon = coords[0] + (Math.random() - 0.5) * 8;
-            const angle = calculateAngle(originLat, originLon, coords[1], coords[0]);
-
-            processedFeatures.push({
-                id: `evt-${i}-${Date.now()}`,
-                source: "GDELT",
-                lat: coords[1],
-                lon: coords[0],
-                actor1Lat: originLat,
-                actor1Lon: originLon,
-                actor1Code: aggressorInfo.code,
-                actor1Name: aggressorInfo.name,
-                actor2Name: targetCountry || locationName,
-                sourceUrl: matchingArticle.url || props.url || "",
-                date: eventDate,
-                angle: angle,
-                goldstein: matchingArticle.tone ? parseFloat(matchingArticle.tone) * -1 : -5,
-                title: title,
-            });
-        }
-
-        // If we didn't find enough real conflicts, add some known ongoing ones
-        if (processedFeatures.length < 5) {
+        // If we didn't get enough events, add known conflicts
+        if (allEvents.filter(e => e.eventType === "conflict").length < 3) {
             const knownConflicts = getKnownConflicts();
-            for (const conflict of knownConflicts) {
-                if (processedFeatures.length >= 20) break;
-                processedFeatures.push(conflict);
-            }
+            allEvents.push(...knownConflicts);
         }
 
-        return NextResponse.json(processedFeatures);
+        // Sort by date (most recent first)
+        allEvents.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+        return NextResponse.json(allEvents);
     } catch (error) {
         console.error("Error in API route:", error);
-
-        // Fallback to known conflicts
         return NextResponse.json(getKnownConflicts());
     }
+}
+
+// Extract casualties/victims from title
+function extractCasualties(title: string): number | null {
+    const patterns = [
+        /(\d+)\s*(?:killed|dead|deaths|died|casualties|victims)/i,
+        /(?:killed|dead|deaths)\s*(\d+)/i,
+        /(\d+)\s*(?:people|soldiers|civilians)\s*(?:killed|dead)/i,
+    ];
+
+    for (const pattern of patterns) {
+        const match = title.match(pattern);
+        if (match && match[1]) {
+            return parseInt(match[1], 10);
+        }
+    }
+    return null;
 }
 
 // Known ongoing conflicts as fallback
 function getKnownConflicts() {
     const now = new Date();
+    const config = EVENT_TYPES.conflict;
 
     return [
-        // Russia - Ukraine War
         {
             id: "known-1",
             source: "GDELT",
+            eventType: "conflict",
             lat: 48.3794,
             lon: 31.1656,
             actor1Code: "RUS",
@@ -139,11 +186,15 @@ function getKnownConflicts() {
             angle: 270,
             goldstein: -9,
             sourceUrl: "",
+            title: "Russia-Ukraine War",
+            casualties: null,
+            color: config.color,
+            label: config.label,
         },
-        // Israel - Gaza (Hamas)
         {
             id: "known-2",
             source: "GDELT",
+            eventType: "conflict",
             lat: 31.5,
             lon: 34.5,
             actor1Code: "ISR",
@@ -153,25 +204,15 @@ function getKnownConflicts() {
             angle: 180,
             goldstein: -9,
             sourceUrl: "",
+            title: "Israel-Gaza Conflict",
+            casualties: null,
+            color: config.color,
+            label: config.label,
         },
-        // Hamas attacking Israel
-        {
-            id: "known-2b",
-            source: "GDELT",
-            lat: 31.8,
-            lon: 34.8,
-            actor1Code: "PSE",
-            actor1Name: "Hamas",
-            actor2Name: "Israel",
-            date: new Date(now.getTime() - 3 * 60 * 60 * 1000).toISOString(),
-            angle: 45,
-            goldstein: -8,
-            sourceUrl: "",
-        },
-        // Sudan Civil War
         {
             id: "known-3",
             source: "GDELT",
+            eventType: "conflict",
             lat: 15.5,
             lon: 32.5,
             actor1Code: "SDN",
@@ -181,25 +222,15 @@ function getKnownConflicts() {
             angle: 45,
             goldstein: -8,
             sourceUrl: "",
+            title: "Sudan Civil War",
+            casualties: null,
+            color: config.color,
+            label: config.label,
         },
-        // Myanmar Civil War
         {
             id: "known-4",
             source: "GDELT",
-            lat: 21.0,
-            lon: 96.0,
-            actor1Code: "MMR",
-            actor1Name: "Myanmar Military",
-            actor2Name: "Myanmar Rebels",
-            date: new Date(now.getTime() - 8 * 60 * 60 * 1000).toISOString(),
-            angle: 90,
-            goldstein: -7,
-            sourceUrl: "",
-        },
-        // Israel - Lebanon (Hezbollah)
-        {
-            id: "known-5",
-            source: "GDELT",
+            eventType: "terrorism",
             lat: 33.8,
             lon: 35.5,
             actor1Code: "LBN",
@@ -209,25 +240,15 @@ function getKnownConflicts() {
             angle: 200,
             goldstein: -6,
             sourceUrl: "",
+            title: "Hezbollah-Israel Tensions",
+            casualties: null,
+            color: EVENT_TYPES.terrorism.color,
+            label: EVENT_TYPES.terrorism.label,
         },
-        // Yemen - Houthis vs Saudi
         {
-            id: "known-6",
+            id: "known-5",
             source: "GDELT",
-            lat: 15.3,
-            lon: 44.2,
-            actor1Code: "YEM",
-            actor1Name: "Houthis",
-            actor2Name: "Saudi Arabia",
-            date: new Date(now.getTime() - 12 * 60 * 60 * 1000).toISOString(),
-            angle: 0,
-            goldstein: -7,
-            sourceUrl: "",
-        },
-        // Somalia - Al-Shabaab
-        {
-            id: "known-7",
-            source: "GDELT",
+            eventType: "terrorism",
             lat: 2.0,
             lon: 45.3,
             actor1Code: "SOM",
@@ -237,48 +258,10 @@ function getKnownConflicts() {
             angle: 135,
             goldstein: -6,
             sourceUrl: "",
-        },
-        // Syria - ISIS remnants
-        {
-            id: "known-8",
-            source: "GDELT",
-            lat: 35.2,
-            lon: 40.1,
-            actor1Code: "ISIS",
-            actor1Name: "ISIS",
-            actor2Name: "Syria",
-            date: new Date(now.getTime() - 16 * 60 * 60 * 1000).toISOString(),
-            angle: 270,
-            goldstein: -6,
-            sourceUrl: "",
-        },
-        // Niger - Wagner Group
-        {
-            id: "known-9",
-            source: "GDELT",
-            lat: 13.5,
-            lon: 2.1,
-            actor1Code: "RUS",
-            actor1Name: "Wagner Group",
-            actor2Name: "Niger",
-            date: new Date(now.getTime() - 18 * 60 * 60 * 1000).toISOString(),
-            angle: 180,
-            goldstein: -4,
-            sourceUrl: "",
-        },
-        // Nigeria - Boko Haram
-        {
-            id: "known-10",
-            source: "GDELT",
-            lat: 11.8,
-            lon: 13.1,
-            actor1Code: "NGA",
-            actor1Name: "Boko Haram",
-            actor2Name: "Nigeria",
-            date: new Date(now.getTime() - 20 * 60 * 60 * 1000).toISOString(),
-            angle: 90,
-            goldstein: -6,
-            sourceUrl: "",
+            title: "Al-Shabaab Attack",
+            casualties: null,
+            color: EVENT_TYPES.terrorism.color,
+            label: EVENT_TYPES.terrorism.label,
         },
     ];
 }
@@ -286,29 +269,27 @@ function getKnownConflicts() {
 // Extract country from location string
 function extractCountryFromLocation(location: string): string {
     const countryPatterns: Record<string, string[]> = {
-        "Ukraine": ["Ukraine", "Kyiv", "Kiev", "Kharkiv", "Odessa", "Donetsk", "Luhansk", "Mariupol", "Zaporizhzhia"],
+        "Ukraine": ["Ukraine", "Kyiv", "Kiev", "Kharkiv", "Odessa", "Donetsk", "Luhansk"],
         "Russia": ["Russia", "Moscow", "St. Petersburg"],
         "Israel": ["Israel", "Tel Aviv", "Jerusalem", "Haifa"],
         "Palestine": ["Palestine", "Gaza", "West Bank", "Ramallah"],
         "Syria": ["Syria", "Damascus", "Aleppo", "Idlib"],
-        "Iraq": ["Iraq", "Baghdad", "Mosul", "Basra"],
-        "Yemen": ["Yemen", "Sanaa", "Aden"],
-        "Sudan": ["Sudan", "Khartoum", "Darfur"],
-        "Somalia": ["Somalia", "Mogadishu"],
-        "Ethiopia": ["Ethiopia", "Addis Ababa", "Tigray"],
-        "Myanmar": ["Myanmar", "Burma", "Yangon", "Naypyidaw"],
-        "Afghanistan": ["Afghanistan", "Kabul", "Kandahar"],
-        "Pakistan": ["Pakistan", "Islamabad", "Karachi"],
         "Lebanon": ["Lebanon", "Beirut"],
         "Iran": ["Iran", "Tehran"],
-        "Libya": ["Libya", "Tripoli", "Benghazi"],
-        "Mali": ["Mali", "Bamako"],
+        "Iraq": ["Iraq", "Baghdad"],
+        "Yemen": ["Yemen", "Sanaa"],
+        "Sudan": ["Sudan", "Khartoum"],
+        "Somalia": ["Somalia", "Mogadishu"],
         "Nigeria": ["Nigeria", "Lagos", "Abuja"],
-        "DR Congo": ["Congo", "Kinshasa", "Goma"],
+        "Myanmar": ["Myanmar", "Burma", "Yangon"],
+        "China": ["China", "Beijing", "Shanghai"],
+        "United States": ["United States", "USA", "Washington", "New York"],
+        "France": ["France", "Paris"],
+        "Germany": ["Germany", "Berlin"],
+        "United Kingdom": ["United Kingdom", "UK", "London"],
     };
 
     const locationLower = location.toLowerCase();
-
     for (const [country, patterns] of Object.entries(countryPatterns)) {
         for (const pattern of patterns) {
             if (locationLower.includes(pattern.toLowerCase())) {
@@ -317,93 +298,78 @@ function extractCountryFromLocation(location: string): string {
         }
     }
 
-    return location.split(',')[0].trim();
+    // Try to extract the last part as country
+    const parts = location.split(",");
+    if (parts.length > 1) {
+        return parts[parts.length - 1].trim();
+    }
+
+    return location;
 }
 
-// Extract aggressor that is DIFFERENT from target
-function extractAggressorFromTitle(title: string, targetCountry: string): { name: string; code: string } {
+// Extract aggressor from title
+function extractAggressorFromTitle(title: string, targetCountry: string, eventType: string): { name: string; code: string } {
+    const aggressorPatterns: Record<string, { name: string; code: string; patterns: string[] }> = {
+        "Russia": { name: "Russia", code: "RUS", patterns: ["russia", "russian", "kremlin", "putin", "moscow"] },
+        "Ukraine": { name: "Ukraine", code: "UKR", patterns: ["ukraine", "ukrainian", "kyiv", "zelensky"] },
+        "Israel": { name: "Israel", code: "ISR", patterns: ["israel", "israeli", "idf", "netanyahu"] },
+        "Hamas": { name: "Hamas", code: "PSE", patterns: ["hamas"] },
+        "Hezbollah": { name: "Hezbollah", code: "LBN", patterns: ["hezbollah", "hizbollah"] },
+        "Iran": { name: "Iran", code: "IRN", patterns: ["iran", "iranian", "tehran"] },
+        "China": { name: "China", code: "CHN", patterns: ["china", "chinese", "beijing"] },
+        "North Korea": { name: "North Korea", code: "PRK", patterns: ["north korea", "pyongyang", "kim jong"] },
+        "ISIS": { name: "ISIS", code: "ISIS", patterns: ["isis", "isil", "islamic state", "daesh"] },
+        "Al-Qaeda": { name: "Al-Qaeda", code: "AQT", patterns: ["al-qaeda", "al qaeda", "aqap"] },
+        "Al-Shabaab": { name: "Al-Shabaab", code: "SOM", patterns: ["al-shabaab", "alshabaab"] },
+        "Hackers": { name: "Hackers", code: "CYB", patterns: ["hacker", "cybercriminal", "apt"] },
+    };
+
     const titleLower = title.toLowerCase();
-    const targetLower = targetCountry.toLowerCase();
 
-    // Define potential aggressors with their patterns
-    const aggressors = [
-        { name: "Russia", code: "RUS", patterns: ["russia", "russian", "moscow", "kremlin", "putin"] },
-        { name: "Ukraine", code: "UKR", patterns: ["ukraine", "ukrainian", "kyiv", "zelensky"] },
-        { name: "United States", code: "USA", patterns: ["united states", "u.s.", "us ", "american", "pentagon", "washington", "biden"] },
-        { name: "Israel", code: "ISR", patterns: ["israel", "israeli", "idf", "netanyahu", "tel aviv"] },
-        { name: "Hamas", code: "PSE", patterns: ["hamas"] },
-        { name: "Hezbollah", code: "LBN", patterns: ["hezbollah", "hizballah"] },
-        { name: "Iran", code: "IRN", patterns: ["iran", "iranian", "tehran", "irgc"] },
-        { name: "China", code: "CHN", patterns: ["china", "chinese", "beijing", "pla"] },
-        { name: "NATO Forces", code: "NATO", patterns: ["nato", "alliance forces"] },
-        { name: "Turkey", code: "TUR", patterns: ["turkey", "turkish", "ankara", "erdogan"] },
-        { name: "Saudi Arabia", code: "SAU", patterns: ["saudi", "riyadh"] },
-        { name: "Houthis", code: "YEM", patterns: ["houthi", "houthis"] },
-        { name: "Syria", code: "SYR", patterns: ["syria", "syrian", "assad", "damascus"] },
-        { name: "Sudan Armed Forces", code: "SDN", patterns: ["sudan", "sudanese", "saf", "rsf"] },
-        { name: "Ethiopia", code: "ETH", patterns: ["ethiopia", "ethiopian"] },
-        { name: "France", code: "FRA", patterns: ["france", "french"] },
-        { name: "United Kingdom", code: "GBR", patterns: ["uk", "britain", "british"] },
-        { name: "North Korea", code: "PRK", patterns: ["north korea", "dprk", "pyongyang", "kim jong"] },
-        { name: "South Korea", code: "KOR", patterns: ["south korea", "seoul"] },
-        { name: "Myanmar Military", code: "MMR", patterns: ["myanmar", "burmese", "junta"] },
-        { name: "Taliban", code: "AFG", patterns: ["taliban"] },
-        { name: "ISIS", code: "ISIS", patterns: ["isis", "islamic state", "daesh", "isil"] },
-        { name: "Al-Qaeda", code: "AQI", patterns: ["al-qaeda", "al qaeda", "aqap"] },
-        { name: "Al-Shabaab", code: "SOM", patterns: ["al-shabaab", "shabaab"] },
-        { name: "Boko Haram", code: "NGA", patterns: ["boko haram"] },
-        { name: "Wagner Group", code: "RUS", patterns: ["wagner", "pmc"] },
-        { name: "India", code: "IND", patterns: ["india", "indian"] },
-        { name: "Pakistan", code: "PAK", patterns: ["pakistan", "pakistani"] },
-    ];
-
-    // Find an aggressor that is NOT the target
-    for (const aggressor of aggressors) {
-        // Skip if this aggressor is the same as target
-        if (targetLower.includes(aggressor.name.toLowerCase()) ||
-            aggressor.name.toLowerCase().includes(targetLower)) {
-            continue;
-        }
-
-        // Check if this aggressor is mentioned in the title
-        for (const pattern of aggressor.patterns) {
-            if (titleLower.includes(pattern)) {
-                return { name: aggressor.name, code: aggressor.code };
+    for (const [_, info] of Object.entries(aggressorPatterns)) {
+        for (const pattern of info.patterns) {
+            if (titleLower.includes(pattern) && info.name !== targetCountry) {
+                return { name: info.name, code: info.code };
             }
         }
     }
 
-    return { name: "", code: "UNK" };
+    // Default based on event type
+    if (eventType === "protest") {
+        return { name: "Protesters", code: "" };
+    } else if (eventType === "cyber") {
+        return { name: "Unknown Hackers", code: "CYB" };
+    } else if (eventType === "terrorism") {
+        return { name: "Unknown Group", code: "" };
+    }
+
+    return { name: "Unknown", code: "" };
 }
 
 // Parse GDELT date format
-function parseGdeltDate(gdeltDate: string): string {
-    if (!gdeltDate || gdeltDate.length < 8) {
-        return new Date().toISOString();
-    }
-
+function parseGdeltDate(dateStr: string): string {
     try {
-        const year = gdeltDate.substring(0, 4);
-        const month = gdeltDate.substring(4, 6);
-        const day = gdeltDate.substring(6, 8);
-        const hour = gdeltDate.length >= 10 ? gdeltDate.substring(8, 10) : "12";
-        const minute = gdeltDate.length >= 12 ? gdeltDate.substring(10, 12) : "00";
-
-        const date = new Date(`${year}-${month}-${day}T${hour}:${minute}:00Z`);
-        if (isNaN(date.getTime())) {
-            return new Date().toISOString();
+        if (dateStr.length === 14) {
+            const year = dateStr.substring(0, 4);
+            const month = dateStr.substring(4, 6);
+            const day = dateStr.substring(6, 8);
+            const hour = dateStr.substring(8, 10);
+            const minute = dateStr.substring(10, 12);
+            const second = dateStr.substring(12, 14);
+            return new Date(`${year}-${month}-${day}T${hour}:${minute}:${second}Z`).toISOString();
         }
-        return date.toISOString();
+        return new Date(dateStr).toISOString();
     } catch {
         return new Date().toISOString();
     }
 }
 
-// Calculate bearing angle between two points
+// Calculate angle between two points
 function calculateAngle(lat1: number, lon1: number, lat2: number, lon2: number): number {
     const dLon = (lon2 - lon1) * Math.PI / 180;
     const lat1Rad = lat1 * Math.PI / 180;
     const lat2Rad = lat2 * Math.PI / 180;
+
     const y = Math.sin(dLon) * Math.cos(lat2Rad);
     const x = Math.cos(lat1Rad) * Math.sin(lat2Rad) - Math.sin(lat1Rad) * Math.cos(lat2Rad) * Math.cos(dLon);
     const rads = Math.atan2(y, x);

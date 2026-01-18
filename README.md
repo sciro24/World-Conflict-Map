@@ -295,6 +295,6 @@ npm run start
 
 **⚔️ RISIKO IRL - Il mondo in tempo reale, come non l'hai mai visto ⚔️**
 
-*Built by Diego*
+*Diego Scirocco*
 
 </div>
