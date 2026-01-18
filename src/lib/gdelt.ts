@@ -12,6 +12,7 @@ export interface ConflictEvent {
     goldstein: number;
     sourceUrl: string;
     date: string;
+    startDate?: string;
     angle: number;
     title: string;
     casualties: number | null;

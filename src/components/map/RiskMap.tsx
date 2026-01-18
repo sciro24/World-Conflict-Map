@@ -120,6 +120,7 @@ interface ConflictEvent {
     goldstein: number;
     sourceUrl: string;
     date: string;
+    startDate?: string;
     angle: number;
     title: string;
     casualties: number | null;
@@ -374,8 +375,12 @@ export function RiskMap({ conflicts, center, zoom, selectedConflictId }: MapProp
                                             <span className="text-white">{selectedEvent.event.actor2Name}</span>
                                         </div>
                                         <div className="flex justify-between">
-                                            <span className="text-gray-400">Time:</span>
+                                            <span className="text-gray-400">Last Update:</span>
                                             <span className="text-white">{formatDate(selectedEvent.event.date)}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span className="text-gray-400">Started:</span>
+                                            <span className="text-white">{formatDate(selectedEvent.event.startDate || selectedEvent.event.date)}</span>
                                         </div>
                                         {selectedEvent.event.duration && (
                                             <div className="flex justify-between">
@@ -394,7 +399,7 @@ export function RiskMap({ conflicts, center, zoom, selectedConflictId }: MapProp
                                         {selectedEvent.event.casualties !== null && (
                                             <div className="flex justify-between">
                                                 <span className="text-gray-400">Casualties:</span>
-                                                <span className="text-red-400 font-medium">{selectedEvent.event.casualties}</span>
+                                                <span className="text-red-400 font-bold">{selectedEvent.event.casualties}</span>
                                             </div>
                                         )}
                                         <div className="mt-2 pt-2 border-t border-white/10 text-[10px] text-gray-500">

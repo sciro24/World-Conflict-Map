@@ -3,7 +3,7 @@
 import React from "react"
 
 interface EventMarkerProps {
-    eventType: "conflict" | "protest" | "cyber" | "terrorism";
+    eventType: "conflict" | "protest" | "cyber" | "terrorism" | "civil_war";
     color: string;
     size?: number;
     onClick?: (e: React.MouseEvent) => void;
@@ -12,6 +12,7 @@ interface EventMarkerProps {
 // Event type icons (simple symbols)
 const EVENT_ICONS: Record<string, string> = {
     conflict: "⚔", // Swords for conflict
+    civil_war: "🔥", // Flame for civil war/insurgency
     protest: "✊", // Fist for protest
     cyber: "💻", // Computer for cyber
     terrorism: "💀", // Skull for terrorism

@@ -229,31 +229,40 @@ export default function Home() {
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-2 text-gray-400">
-                      <Clock className="w-2.5 h-2.5 text-green-400" />
-                      <span className="text-gray-300">{formatEventDate(c.date)}</span>
-                      {c.casualties !== null && (
-                        <>
-                          <span className="text-gray-600">•</span>
-                          <span className="text-red-400">{c.casualties} casualties</span>
-                        </>
-                      )}
+                    {/* Casualties & Duration */}
+                    <div className="flex items-center justify-between gap-2 mt-2 pt-2 border-t border-white/5">
+                      <div className="flex items-center gap-2">
+                        {c.casualties && (
+                          <span className="flex items-center gap-1 text-red-500 font-bold bg-red-500/10 px-1.5 py-0.5 rounded">
+                            <Skull className="w-3 h-3" />
+                            {c.casualties}
+                          </span>
+                        )}
+                        {c.duration && (
+                          <span className="text-yellow-500/80 font-mono text-[9px]">
+                            {c.duration}
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-gray-600">
+                        {formatEventDate(c.date)}
+                      </span>
                     </div>
-                  </div>
 
-                  {/* Source Link */}
-                  {c.sourceUrl && (
-                    <a
-                      href={c.sourceUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="mt-2 flex items-center gap-1 text-[9px] text-blue-400 hover:text-blue-300"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <ExternalLink className="w-2.5 h-2.5" />
-                      <span>Source</span>
-                    </a>
-                  )}
+                    {/* Link */}
+                    {c.sourceUrl && (
+                      <a
+                        href={c.sourceUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1 text-[9px] text-blue-500/60 hover:text-blue-400 w-fit pt-1"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <ExternalLink className="w-2.5 h-2.5" />
+                        <span>Source</span>
+                      </a>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
@@ -306,6 +315,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-    </main>
+    </main >
   )
 }
