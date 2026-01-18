@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useMemo } from "react"
+import React, { useState, useMemo, useEffect, useRef } from "react"
 import { ComposableMap, Geographies, Geography, Marker, ZoomableGroup } from "react-simple-maps"
 import { EventMarker } from "./EventMarker"
 import { motion, AnimatePresence } from "framer-motion"
@@ -9,44 +9,114 @@ const geoUrl = "https://unpkg.com/world-atlas@2.0.2/countries-110m.json"
 
 // Risiko colors per continent
 const RISIKO_COLORS = {
-    EUROPE: "#3b82f6",
-    ASIA: "#22c55e",
-    NORTH_AMERICA: "#f97316",
-    SOUTH_AMERICA: "#0ea5e9",
-    AFRICA: "#a16207",
-    OCEANIA: "#a855f7",
+    EUROPE: "#3b82f6",      // Blue
+    ASIA: "#22c55e",        // Green  
+    NORTH_AMERICA: "#f97316", // Orange
+    SOUTH_AMERICA: "#0ea5e9", // Light Blue
+    AFRICA: "#a16207",      // Brown
+    OCEANIA: "#a855f7",     // Purple
 } as const;
 
-// Map countries to their Risiko continent
+// COMPLETE mapping of ALL countries to continents
 const COUNTRY_TO_CONTINENT: Record<string, keyof typeof RISIKO_COLORS> = {
-    // EUROPE
-    "Germany": "EUROPE", "France": "EUROPE", "United Kingdom": "EUROPE",
-    "Italy": "EUROPE", "Spain": "EUROPE", "Ukraine": "EUROPE", "Poland": "EUROPE",
-    "Romania": "EUROPE", "Netherlands": "EUROPE", "Belgium": "EUROPE", "Sweden": "EUROPE",
-    "Czech Republic": "EUROPE", "Czechia": "EUROPE", "Greece": "EUROPE", "Portugal": "EUROPE",
-    "Hungary": "EUROPE", "Austria": "EUROPE", "Switzerland": "EUROPE", "Bulgaria": "EUROPE",
-    "Denmark": "EUROPE", "Finland": "EUROPE", "Slovakia": "EUROPE", "Norway": "EUROPE",
-    "Ireland": "EUROPE", "Croatia": "EUROPE", "Bosnia and Herzegovina": "EUROPE",
-    "Albania": "EUROPE", "Lithuania": "EUROPE", "Slovenia": "EUROPE", "Latvia": "EUROPE",
-    "Estonia": "EUROPE", "Serbia": "EUROPE", "Belarus": "EUROPE", "Moldova": "EUROPE",
-    // ASIA
-    "Russia": "ASIA", "China": "ASIA", "India": "ASIA", "Indonesia": "ASIA", "Pakistan": "ASIA",
-    "Japan": "ASIA", "Philippines": "ASIA", "Vietnam": "ASIA", "Turkey": "ASIA", "Iran": "ASIA",
-    "Thailand": "ASIA", "Myanmar": "ASIA", "South Korea": "ASIA", "Iraq": "ASIA",
-    "Saudi Arabia": "ASIA", "Yemen": "ASIA", "Syria": "ASIA", "Israel": "ASIA", "Lebanon": "ASIA",
-    // NORTH AMERICA
+    // ========== EUROPE (Blue) ==========
+    "Albania": "EUROPE", "Andorra": "EUROPE", "Austria": "EUROPE", "Belarus": "EUROPE",
+    "Belgium": "EUROPE", "Bosnia and Herzegovina": "EUROPE", "Bosnia and Herz.": "EUROPE",
+    "Bulgaria": "EUROPE", "Croatia": "EUROPE", "Cyprus": "EUROPE", "Czech Republic": "EUROPE",
+    "Czechia": "EUROPE", "Denmark": "EUROPE", "Estonia": "EUROPE", "Finland": "EUROPE",
+    "France": "EUROPE", "Germany": "EUROPE", "Greece": "EUROPE", "Hungary": "EUROPE",
+    "Iceland": "EUROPE", "Ireland": "EUROPE", "Italy": "EUROPE", "Kosovo": "EUROPE",
+    "Latvia": "EUROPE", "Liechtenstein": "EUROPE", "Lithuania": "EUROPE", "Luxembourg": "EUROPE",
+    "Malta": "EUROPE", "Moldova": "EUROPE", "Monaco": "EUROPE", "Montenegro": "EUROPE",
+    "Netherlands": "EUROPE", "North Macedonia": "EUROPE", "Macedonia": "EUROPE",
+    "Norway": "EUROPE", "Poland": "EUROPE", "Portugal": "EUROPE", "Romania": "EUROPE",
+    "San Marino": "EUROPE", "Serbia": "EUROPE", "Slovakia": "EUROPE", "Slovenia": "EUROPE",
+    "Spain": "EUROPE", "Sweden": "EUROPE", "Switzerland": "EUROPE", "Ukraine": "EUROPE",
+    "United Kingdom": "EUROPE", "Vatican City": "EUROPE",
+
+    // ========== ASIA (Green) ==========
+    "Afghanistan": "ASIA", "Armenia": "ASIA", "Azerbaijan": "ASIA", "Bahrain": "ASIA",
+    "Bangladesh": "ASIA", "Bhutan": "ASIA", "Brunei": "ASIA", "Cambodia": "ASIA",
+    "China": "ASIA", "Georgia": "ASIA", "India": "ASIA", "Indonesia": "ASIA",
+    "Iran": "ASIA", "Iraq": "ASIA", "Israel": "ASIA", "Japan": "ASIA",
+    "Jordan": "ASIA", "Kazakhstan": "ASIA", "Kuwait": "ASIA", "Kyrgyzstan": "ASIA",
+    "Laos": "ASIA", "Lebanon": "ASIA", "Malaysia": "ASIA", "Maldives": "ASIA",
+    "Mongolia": "ASIA", "Myanmar": "ASIA", "Nepal": "ASIA", "North Korea": "ASIA",
+    "Oman": "ASIA", "Pakistan": "ASIA", "Palestine": "ASIA", "Philippines": "ASIA",
+    "Qatar": "ASIA", "Russia": "ASIA", "Saudi Arabia": "ASIA", "Singapore": "ASIA",
+    "South Korea": "ASIA", "Korea": "ASIA", "Sri Lanka": "ASIA", "Syria": "ASIA",
+    "Taiwan": "ASIA", "Tajikistan": "ASIA", "Thailand": "ASIA", "Timor-Leste": "ASIA",
+    "Turkey": "ASIA", "Turkmenistan": "ASIA", "United Arab Emirates": "ASIA",
+    "Uzbekistan": "ASIA", "Vietnam": "ASIA", "Yemen": "ASIA",
+
+    // ========== NORTH AMERICA (Orange) ==========
+    "Antigua and Barbuda": "NORTH_AMERICA", "Bahamas": "NORTH_AMERICA", "Barbados": "NORTH_AMERICA",
+    "Belize": "NORTH_AMERICA", "Canada": "NORTH_AMERICA", "Costa Rica": "NORTH_AMERICA",
+    "Cuba": "NORTH_AMERICA", "Dominica": "NORTH_AMERICA", "Dominican Republic": "NORTH_AMERICA",
+    "Dominican Rep.": "NORTH_AMERICA", "El Salvador": "NORTH_AMERICA", "Greenland": "NORTH_AMERICA",
+    "Grenada": "NORTH_AMERICA", "Guatemala": "NORTH_AMERICA", "Haiti": "NORTH_AMERICA",
+    "Honduras": "NORTH_AMERICA", "Jamaica": "NORTH_AMERICA", "Mexico": "NORTH_AMERICA",
+    "Nicaragua": "NORTH_AMERICA", "Panama": "NORTH_AMERICA", "Puerto Rico": "NORTH_AMERICA",
+    "Saint Kitts and Nevis": "NORTH_AMERICA", "Saint Lucia": "NORTH_AMERICA",
+    "Saint Vincent and the Grenadines": "NORTH_AMERICA", "Trinidad and Tobago": "NORTH_AMERICA",
     "United States": "NORTH_AMERICA", "United States of America": "NORTH_AMERICA",
-    "Mexico": "NORTH_AMERICA", "Canada": "NORTH_AMERICA", "Cuba": "NORTH_AMERICA",
-    // SOUTH AMERICA
-    "Brazil": "SOUTH_AMERICA", "Colombia": "SOUTH_AMERICA", "Argentina": "SOUTH_AMERICA",
-    "Peru": "SOUTH_AMERICA", "Venezuela": "SOUTH_AMERICA", "Chile": "SOUTH_AMERICA",
-    // AFRICA
-    "Nigeria": "AFRICA", "Ethiopia": "AFRICA", "Egypt": "AFRICA", "South Africa": "AFRICA",
-    "Kenya": "AFRICA", "Algeria": "AFRICA", "Sudan": "AFRICA", "Morocco": "AFRICA",
-    "Somalia": "AFRICA", "Libya": "AFRICA", "Tunisia": "AFRICA",
-    // OCEANIA
-    "Australia": "OCEANIA", "New Zealand": "OCEANIA", "Papua New Guinea": "OCEANIA",
+
+    // ========== SOUTH AMERICA (Light Blue) ==========
+    "Argentina": "SOUTH_AMERICA", "Bolivia": "SOUTH_AMERICA", "Brazil": "SOUTH_AMERICA",
+    "Chile": "SOUTH_AMERICA", "Colombia": "SOUTH_AMERICA", "Ecuador": "SOUTH_AMERICA",
+    "Falkland Islands": "SOUTH_AMERICA", "Falkland Is.": "SOUTH_AMERICA",
+    "French Guiana": "SOUTH_AMERICA", "Guyana": "SOUTH_AMERICA", "Paraguay": "SOUTH_AMERICA",
+    "Peru": "SOUTH_AMERICA", "Suriname": "SOUTH_AMERICA", "Uruguay": "SOUTH_AMERICA",
+    "Venezuela": "SOUTH_AMERICA",
+
+    // ========== AFRICA (Brown) ==========
+    "Algeria": "AFRICA", "Angola": "AFRICA", "Benin": "AFRICA", "Botswana": "AFRICA",
+    "Burkina Faso": "AFRICA", "Burundi": "AFRICA", "Cameroon": "AFRICA", "Cape Verde": "AFRICA",
+    "Central African Republic": "AFRICA", "Central African Rep.": "AFRICA", "Chad": "AFRICA",
+    "Comoros": "AFRICA", "Congo": "AFRICA", "Republic of Congo": "AFRICA",
+    "Democratic Republic of the Congo": "AFRICA", "Dem. Rep. Congo": "AFRICA", "DR Congo": "AFRICA",
+    "Djibouti": "AFRICA", "Egypt": "AFRICA", "Equatorial Guinea": "AFRICA", "Eq. Guinea": "AFRICA",
+    "Eritrea": "AFRICA", "Eswatini": "AFRICA", "Swaziland": "AFRICA", "Ethiopia": "AFRICA",
+    "Gabon": "AFRICA", "Gambia": "AFRICA", "Ghana": "AFRICA", "Guinea": "AFRICA",
+    "Guinea-Bissau": "AFRICA", "Ivory Coast": "AFRICA", "Côte d'Ivoire": "AFRICA",
+    "Kenya": "AFRICA", "Lesotho": "AFRICA", "Liberia": "AFRICA", "Libya": "AFRICA",
+    "Madagascar": "AFRICA", "Malawi": "AFRICA", "Mali": "AFRICA", "Mauritania": "AFRICA",
+    "Mauritius": "AFRICA", "Morocco": "AFRICA", "Mozambique": "AFRICA", "Namibia": "AFRICA",
+    "Niger": "AFRICA", "Nigeria": "AFRICA", "Rwanda": "AFRICA", "São Tomé and Príncipe": "AFRICA",
+    "Senegal": "AFRICA", "Seychelles": "AFRICA", "Sierra Leone": "AFRICA", "Somalia": "AFRICA",
+    "Somaliland": "AFRICA", "South Africa": "AFRICA", "South Sudan": "AFRICA", "S. Sudan": "AFRICA",
+    "Sudan": "AFRICA", "Tanzania": "AFRICA", "Togo": "AFRICA", "Tunisia": "AFRICA",
+    "Uganda": "AFRICA", "W. Sahara": "AFRICA", "Western Sahara": "AFRICA", "Zambia": "AFRICA",
+    "Zimbabwe": "AFRICA",
+
+    // ========== OCEANIA (Purple) ==========
+    "Australia": "OCEANIA", "Fiji": "OCEANIA", "Kiribati": "OCEANIA",
+    "Marshall Islands": "OCEANIA", "Micronesia": "OCEANIA", "Nauru": "OCEANIA",
+    "New Caledonia": "OCEANIA", "New Zealand": "OCEANIA", "Palau": "OCEANIA",
+    "Papua New Guinea": "OCEANIA", "Samoa": "OCEANIA", "Solomon Islands": "OCEANIA",
+    "Solomon Is.": "OCEANIA", "Tonga": "OCEANIA", "Tuvalu": "OCEANIA", "Vanuatu": "OCEANIA",
+    "French Polynesia": "OCEANIA",
 };
+
+// Determine continent by coordinates for unmapped countries
+function getContinentByCoordinates(lat: number, lon: number): keyof typeof RISIKO_COLORS {
+    // Europe
+    if (lat > 35 && lat < 72 && lon > -25 && lon < 40) return "EUROPE";
+    // Asia (including Russia)
+    if (lat > 0 && lon > 40 && lon < 180) return "ASIA";
+    if (lat > 0 && lon > -180 && lon < -100 && lat > 50) return "ASIA"; // Eastern Russia
+    if (lat > 0 && lat < 55 && lon > 25 && lon < 180) return "ASIA";
+    // North America
+    if (lat > 7 && lat < 85 && lon > -170 && lon < -50) return "NORTH_AMERICA";
+    // South America
+    if (lat < 15 && lat > -60 && lon > -85 && lon < -30) return "SOUTH_AMERICA";
+    // Africa
+    if (lat > -40 && lat < 38 && lon > -20 && lon < 55) return "AFRICA";
+    // Oceania
+    if (lat < 0 && lon > 100) return "OCEANIA";
+
+    return "EUROPE"; // Default
+}
 
 interface ConflictEvent {
     id: string;
@@ -74,14 +144,6 @@ interface MapProps {
     selectedConflictId?: string | null;
 }
 
-interface CountryPopupData {
-    name: string;
-    x: number;
-    y: number;
-    events: ConflictEvent[];
-    continent?: string;
-}
-
 interface EventPopupData {
     event: ConflictEvent;
     x: number;
@@ -89,8 +151,24 @@ interface EventPopupData {
 }
 
 export function RiskMap({ conflicts, center, zoom, selectedConflictId }: MapProps) {
-    const [selectedCountry, setSelectedCountry] = useState<CountryPopupData | null>(null);
     const [selectedEvent, setSelectedEvent] = useState<EventPopupData | null>(null);
+    const mapRef = useRef<HTMLDivElement>(null);
+
+    // Auto-open popup when conflict is selected from sidebar
+    useEffect(() => {
+        if (selectedConflictId && mapRef.current) {
+            const event = conflicts.find(c => c.id === selectedConflictId);
+            if (event) {
+                // Get center of map container
+                const rect = mapRef.current.getBoundingClientRect();
+                setSelectedEvent({
+                    event,
+                    x: rect.left + rect.width / 2,
+                    y: rect.top + rect.height / 2 - 100,
+                });
+            }
+        }
+    }, [selectedConflictId, conflicts]);
 
     // Set of countries with active events
     const countriesWithEvents = useMemo(() => {
@@ -102,47 +180,54 @@ export function RiskMap({ conflicts, center, zoom, selectedConflictId }: MapProp
         return set;
     }, [conflicts]);
 
-    // Get country color based on continent
-    const getCountryColor = (countryName: string) => {
-        const continent = COUNTRY_TO_CONTINENT[countryName];
-        if (continent) {
-            return RISIKO_COLORS[continent];
+    // Get country color - NEVER return gray
+    const getCountryColor = (countryName: string, geo: any) => {
+        // First try direct mapping
+        let continent = COUNTRY_TO_CONTINENT[countryName];
+
+        // If not found, try to determine by centroid coordinates
+        if (!continent && geo.geometry) {
+            try {
+                // Get approximate center of the country
+                const coords = geo.geometry.coordinates;
+                if (coords) {
+                    let lat = 0, lon = 0;
+                    if (geo.geometry.type === "Polygon") {
+                        const ring = coords[0];
+                        ring.forEach((c: number[]) => { lon += c[0]; lat += c[1]; });
+                        lon /= ring.length; lat /= ring.length;
+                    } else if (geo.geometry.type === "MultiPolygon") {
+                        const ring = coords[0][0];
+                        ring.forEach((c: number[]) => { lon += c[0]; lat += c[1]; });
+                        lon /= ring.length; lat /= ring.length;
+                    }
+                    continent = getContinentByCoordinates(lat, lon);
+                }
+            } catch { }
         }
-        return "#374151"; // Default gray
+
+        // Fallback mapping based on common country name variations
+        if (!continent) {
+            const nameLower = countryName.toLowerCase();
+            if (nameLower.includes("congo") || nameLower.includes("sudan") || nameLower.includes("guinea")) {
+                continent = "AFRICA";
+            } else if (nameLower.includes("korea") || nameLower.includes("china") || nameLower.includes("india")) {
+                continent = "ASIA";
+            } else if (nameLower.includes("america") || nameLower.includes("states")) {
+                continent = "NORTH_AMERICA";
+            }
+        }
+
+        return RISIKO_COLORS[continent || "EUROPE"];
     };
 
-    // Check if country is in conflict
+    // Check if country is involved in events
     const isCountryInvolved = (countryName: string) => {
         return countriesWithEvents.has(countryName.toLowerCase());
     };
 
-    // Get events for a country
-    const getCountryEvents = (countryName: string) => {
-        const nameLower = countryName.toLowerCase();
-        return conflicts.filter(c =>
-            c.actor1Name?.toLowerCase().includes(nameLower) ||
-            c.actor2Name?.toLowerCase().includes(nameLower)
-        );
-    };
-
-    // Handle country click
-    const handleCountryClick = (geo: any, evt: React.MouseEvent) => {
-        const countryName = geo.properties.name;
-        const countryEvents = getCountryEvents(countryName);
-
-        setSelectedEvent(null);
-        setSelectedCountry({
-            name: countryName,
-            x: evt.clientX,
-            y: evt.clientY,
-            events: countryEvents,
-            continent: COUNTRY_TO_CONTINENT[countryName],
-        });
-    };
-
     // Handle event marker click
     const handleEventClick = (event: ConflictEvent, e: React.MouseEvent) => {
-        setSelectedCountry(null);
         setSelectedEvent({
             event,
             x: e.clientX,
@@ -150,14 +235,13 @@ export function RiskMap({ conflicts, center, zoom, selectedConflictId }: MapProp
         });
     };
 
-    // Format date
+    // Format date (only day, no time)
     const formatDate = (dateStr: string) => {
         try {
-            return new Date(dateStr).toLocaleString('it-IT', {
+            return new Date(dateStr).toLocaleDateString('it-IT', {
                 day: '2-digit',
                 month: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit'
+                year: 'numeric'
             });
         } catch {
             return "Unknown";
@@ -176,7 +260,7 @@ export function RiskMap({ conflicts, center, zoom, selectedConflictId }: MapProp
     };
 
     return (
-        <div className="relative w-full h-full bg-gray-950">
+        <div ref={mapRef} className="relative w-full h-full bg-gray-950">
             <ComposableMap
                 projection="geoMercator"
                 projectionConfig={{
@@ -190,19 +274,19 @@ export function RiskMap({ conflicts, center, zoom, selectedConflictId }: MapProp
                     zoom={zoom || 1}
                     minZoom={1}
                     maxZoom={8}
+                    translateExtent={[[-200, -150], [1000, 600]]} // LIMIT SCROLLING
                 >
                     <Geographies geography={geoUrl}>
                         {({ geographies }) =>
                             geographies.map((geo) => {
                                 const countryName = geo.properties.name;
-                                const baseColor = getCountryColor(countryName);
+                                const baseColor = getCountryColor(countryName, geo);
                                 const isInvolved = isCountryInvolved(countryName);
 
                                 return (
                                     <Geography
                                         key={geo.rsmKey}
                                         geography={geo}
-                                        onClick={(evt) => handleCountryClick(geo, evt)}
                                         style={{
                                             default: {
                                                 fill: isInvolved
@@ -231,7 +315,7 @@ export function RiskMap({ conflicts, center, zoom, selectedConflictId }: MapProp
                         }
                     </Geographies>
 
-                    {/* Event markers - small colored dots */}
+                    {/* Event markers */}
                     {conflicts?.map((event) => (
                         <Marker key={event.id} coordinates={[event.lon, event.lat]}>
                             <EventMarker
@@ -244,62 +328,6 @@ export function RiskMap({ conflicts, center, zoom, selectedConflictId }: MapProp
                     ))}
                 </ZoomableGroup>
             </ComposableMap>
-
-            {/* Country Popup */}
-            <AnimatePresence>
-                {selectedCountry && (
-                    <>
-                        <div
-                            className="fixed inset-0 z-40"
-                            onClick={() => setSelectedCountry(null)}
-                        />
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.9 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.9 }}
-                            className="fixed z-50 w-72 max-h-[60vh] overflow-hidden"
-                            style={{
-                                left: Math.min(selectedCountry.x, window.innerWidth - 300),
-                                top: Math.min(selectedCountry.y + 10, window.innerHeight - 350),
-                            }}
-                        >
-                            <div className="bg-gradient-to-br from-gray-900 to-black backdrop-blur-xl border border-white/20 text-white rounded-xl shadow-2xl overflow-hidden">
-                                <div className="p-3 border-b border-white/10 bg-black/30">
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <h3 className="font-bold text-base">{selectedCountry.name}</h3>
-                                            <span className="text-xs text-gray-400">{selectedCountry.continent}</span>
-                                        </div>
-                                        <button
-                                            onClick={() => setSelectedCountry(null)}
-                                            className="text-gray-400 hover:text-white text-xl p-1"
-                                        >×</button>
-                                    </div>
-                                    {selectedCountry.events.length > 0 ? (
-                                        <span className="text-red-400 text-xs">⚠️ {selectedCountry.events.length} active events</span>
-                                    ) : (
-                                        <span className="text-green-400 text-xs">🕊️ No active events</span>
-                                    )}
-                                </div>
-                                {selectedCountry.events.length > 0 && (
-                                    <div className="max-h-48 overflow-y-auto p-2 space-y-2">
-                                        {selectedCountry.events.map((event, idx) => (
-                                            <div key={idx} className="p-2 bg-white/5 rounded-lg border border-white/10 text-xs">
-                                                <div className="flex items-center gap-2 mb-1">
-                                                    <span>{getEventEmoji(event.eventType)}</span>
-                                                    <span className="font-medium" style={{ color: event.color }}>{event.label}</span>
-                                                </div>
-                                                <div className="text-gray-400">{event.actor1Name} → {event.actor2Name}</div>
-                                                <div className="text-gray-500 text-[10px]">{formatDate(event.date)}</div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        </motion.div>
-                    </>
-                )}
-            </AnimatePresence>
 
             {/* Event Popup */}
             <AnimatePresence>
@@ -315,8 +343,8 @@ export function RiskMap({ conflicts, center, zoom, selectedConflictId }: MapProp
                             exit={{ opacity: 0, scale: 0.9 }}
                             className="fixed z-50 w-72 overflow-hidden"
                             style={{
-                                left: Math.min(selectedEvent.x, window.innerWidth - 300),
-                                top: Math.min(selectedEvent.y + 10, window.innerHeight - 250),
+                                left: Math.min(Math.max(selectedEvent.x - 144, 10), window.innerWidth - 300),
+                                top: Math.min(Math.max(selectedEvent.y + 10, 10), window.innerHeight - 250),
                             }}
                         >
                             <div className="bg-gradient-to-br from-gray-900 to-black backdrop-blur-xl border border-white/20 text-white rounded-xl shadow-2xl overflow-hidden">
@@ -329,7 +357,7 @@ export function RiskMap({ conflicts, center, zoom, selectedConflictId }: MapProp
                                                     {selectedEvent.event.label}
                                                 </h3>
                                                 <span className="text-xs text-gray-400">
-                                                    {selectedEvent.event.actor1Name} → {selectedEvent.event.actor2Name}
+                                                    {selectedEvent.event.actor2Name}
                                                 </span>
                                             </div>
                                         </div>
@@ -343,7 +371,7 @@ export function RiskMap({ conflicts, center, zoom, selectedConflictId }: MapProp
                                     <div className="p-2 bg-white/5 rounded-lg border border-white/10 text-xs space-y-1.5">
                                         <div className="flex justify-between">
                                             <span className="text-gray-400">Aggressor:</span>
-                                            <span className="text-white">{selectedEvent.event.actor1Name}</span>
+                                            <span className="text-white font-medium">{selectedEvent.event.actor1Name}</span>
                                         </div>
                                         <div className="flex justify-between">
                                             <span className="text-gray-400">Target:</span>

@@ -69,14 +69,13 @@ export default function Home() {
     return counts;
   }, [conflicts]);
 
-  // Format time
-  const formatEventTime = (dateString: string) => {
+  // Format date (only day, no time)
+  const formatEventDate = (dateString: string) => {
     const date = new Date(dateString)
-    return date.toLocaleString('it-IT', {
-      hour: '2-digit',
-      minute: '2-digit',
+    return date.toLocaleDateString('it-IT', {
       day: '2-digit',
       month: '2-digit',
+      year: 'numeric',
     })
   }
 
@@ -220,7 +219,7 @@ export default function Home() {
 
                     <div className="flex items-center gap-2 text-gray-400">
                       <Clock className="w-2.5 h-2.5 text-green-400" />
-                      <span className="text-gray-300">{formatEventTime(c.date)}</span>
+                      <span className="text-gray-300">{formatEventDate(c.date)}</span>
                       {c.casualties !== null && (
                         <>
                           <span className="text-gray-600">•</span>
