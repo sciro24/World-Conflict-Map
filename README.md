@@ -10,7 +10,6 @@
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4.0-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 
-
 [Live Demo](#-Overview) • [Features](#-features) • [Installation](#-installation) • [Tech Stack](#-tech-stack) • [API](#-api)
 
 </div>
@@ -21,20 +20,20 @@
 
 <div align="center">
 
-### Main Dashboard (Desktop)
+### Main Dashboard
 <img src="./img/screenshot_main.png" alt="Risiko IRL Dashboard" width="800" />
 
-*Interactive world map with Risk-style colored continents and real-time conflict feed*
+*Interactive world map with distinct continental coloring and real-time conflict feed*
 
 ### Conflict Details
 <img src="./img/screenshot_popup.png" alt="Conflict Details Popup" width="600" />
 
-*Interactive markers with details on aggressor, target, intensity, and casualty estimates*
+*Detail view showing incident specifics, location data, and context*
 
 ### Mobile Experience
 <img src="./img/screenshot_mobile.png" alt="Mobile Responsive View" width="300" />
 
-*Fully responsive layout with collapsible drawer navigation and touch-optimized controls*
+*Professional mobile interface with accessible navigation and responsive layouts*
 
 </div>
 
@@ -44,10 +43,15 @@
 
 🔴 **LIVE DEMO:** [risiko-irl.vercel.app](https://risiko-irl.vercel.app)
 
-**RISIKO IRL** is a modern web application that visualizes global conflicts in real-time on an interactive map inspired by the classic board game *Risk*. The app leverages [GDELT Project](https://www.gdeltproject.org/) data to monitor armed conflicts, civil wars, and cyber attacks worldwide, presenting them with a "gamified" yet professional aesthetic.
+**RISIKO IRL** is a web-based dashboard designed to visualize global geopolitical events and conflicts in real-time. By leveraging data from the [GDELT Project](https://www.gdeltproject.org/), the application provides an accessible interface to monitor international developments, offering a clear graphical representation of active conflict zones.
 
+The project visualizes complex global data through high-contrast, region-based color coding to facilitate rapid understanding of geopolitical dynamics.
 
-| Continent | Color |
+### 🌍 Regional Visualization
+
+Data is organized visually by continent, using a distinct color palette to easily distinguish geopolitical regions:
+
+| Continent | Visualization |
 |------------|--------|
 | 🔵 Europe | Blue |
 | 🟢 Asia | Green |
@@ -60,28 +64,25 @@
 
 ## ✨ Features
 
-### 🗺️ Interactive Map
-- **Risk-Style Visualization**: Continents colored authentically to the board game.
-- **Smart Touch Zoom**: Touch-friendly zoom controls (+/-) and fluid panning for mobile and desktop.
-- **Infinite Scroll**: Continuous horizontal panning across the globe.
-- **Dynamic Highlighting**: Countries involved in conflicts glow with intensity.
+### 🗺️ Interactive Data Map
+- **Continental Color Coding**: distinct color schemes for immediate regional identification.
+- **Smart Zoom & Navigation**: Smooth controls for exploring global hot-spots.
+- **Dynamic highlighting**: Active zones are visually emphasized to draw attention to developing situations.
 
-### 📱 Mobile-First Experience
-- **Responsive Drawer**: Collapsible sidebar that works as a drawer on mobile (maximizing map space).
-- **Touch Optimization**: Large touch targets and specialized mobile UI layouts.
-- **Adaptive Layout**: Different viewing modes for Desktop vs Smartphone.
+### 📱 Responsive Design
+- **Mobile-First Interface**: Optimized layout for smartphones with a collapsible drawer system.
+- **Touch-Friendly Controls**: Accessible interface for touch devices.
 
-### 🎖️ Conflict Markers
-- **Custom Event Icons**: Different markers for Wars (Swords), Civil Wars (Flame), Terrorism (Skull), Cyber (Zap).
-- **Smart Casualty Estimates**: Displays total estimated casualties (e.g., "500k*") for major known conflicts.
-- **Directional Rotation**: Markers point towards the conflict direction when applicable.
-- **Detailed Popups**: Click to see aggressor, target, intensity, and source links.
+### 📊 Data & Insights
+- **Conflict Monitoring**: Categorization of events (Armed Conflict, Civil Unrest, Cyber security).
+- **Casualty Estimates**: Integrates available data on total estimated human impact for major ongoing conflicts.
+- **Directional Markers**: Visual indicators showing the directional flow of events where applicable.
+- **Contextual Information**: Detailed popups providing source links, intensity levels, and actors involved.
 
-### 📊 Intelligence Feed (Sidebar)
-- **Live Conflict Feed**: Scrollable list of active events ordered by relevance.
-- **Resilient Data Fetching**: Handles API rate limits (GDELT 429) gracefully to ensure stability.
-- **Smart Filtering**: Auto-tagging of estimates vs real-time reports.
-- **Source Links**: Direct access to original GDELT source articles.
+### � Real-Time Intelligence
+- **Live Feed System**: Chronological list of events updated frequently.
+- **Robust API Integration**: Handles large datasets and API constraints efficiently.
+- **Source Verification**: Direct links to original news sources for independent verification.
 
 ---
 
@@ -90,7 +91,7 @@
 ### Prerequisites
 
 - **Node.js** 18.0 or higher
-- **npm**, **yarn**, **pnpm** or **bun**
+- **npm** or preferred package manager
 
 ### Quick Start
 
@@ -101,7 +102,7 @@ git clone https://github.com/yourusername/Risiko-IRL.git
 # 2. Enter directory
 cd Risiko-IRL
 
-# 3. Install dependencies (Legacy peer deps recommended for React 19 compatibility)
+# 3. Install dependencies
 npm install --legacy-peer-deps
 
 # 4. Start development server
@@ -115,62 +116,44 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 ## 🛠️ Tech Stack
 
 ### Core Framework
-- **[Next.js 16](https://nextjs.org/)** - React Framework with App Router & Turbopack
-- **[React 19](https://react.dev/)** - UI Library
-- **[TypeScript 5](https://www.typescriptlang.org/)** - Type Safety
+- **[Next.js 16](https://nextjs.org/)** - Modern App Router architecture
+- **[React 19](https://react.dev/)** - Component library
+- **[TypeScript 5](https://www.typescriptlang.org/)** - Type-safe development
 
 ### Styling & UI
-- **[Tailwind CSS 4](https://tailwindcss.com/)** - Utility-First CSS
-- **[Framer Motion](https://www.framer.com/motion/)** - Fluid Animations
-- **[Lucide React](https://lucide.dev/)** - Modern Iconography
+- **[Tailwind CSS 4](https://tailwindcss.com/)** - Utility-first styling
+- **[Framer Motion](https://www.framer.com/motion/)** - Interface animations
+- **[Lucide React](https://lucide.dev/)** - Icon system
 
-### Mapping & Data Visualization
-- **[React Simple Maps](https://www.react-simple-maps.io/)** - Interactive SVG Maps
-- **[D3 Scale](https://d3js.org/)** - Data Scaling
-
-### Data & Networking
-- **[Axios](https://axios-http.com/)** - HTTP Client
-- **[GDELT API](https://www.gdeltproject.org/)** - Global Events Database
+### Data Visualization
+- **[React Simple Maps](https://www.react-simple-maps.io/)** - Vector map rendering
+- **[D3 Scale](https://d3js.org/)** - Mathematical scaling for data viz
 
 ---
 
-## 📡 API Architecture
+## 📡 Data Architecture
 
 ### GDELT Integration
 
-The app consumes two primary GDELT v2 endpoints:
+The application processes data from the **Global Database of Events, Language, and Tone (GDELT)**, specifically utilizing V2 endpoints to retrieve real-time event logs.
 
-#### Document API
-```
-GET https://api.gdeltproject.org/api/v2/doc/doc
-```
-Queries for articles related to armed conflict, military strikes, and civil unrest.
+#### Data Processing Pipeline
+1. **Fetch**: Retrive raw event logs from GDELT API.
+2. **Contextualize**: Cross-reference with known conflict data (e.g., historical casualty estimates).
+3. **Parse**: Extract actor names, locations, and event types using natural language processing heuristics.
+4. **Display**: Render on the frontend with appropriate visual weight and categorization.
 
-#### Internal API Route
-```
-GET /api/conflicts
-```
-
-Server-side endpoint that acts as a proxy and data processor:
-1. **Fetches** raw data from GDELT.
-2. **Injects** known conflict data (Casualty estimates, Start dates).
-3. **Smart Parsing**: Extracts actor names and casualty counts from article titles using Regex and heuristic maps (`CASUALTY_ESTIMATES`).
-4. **Handles Errors**: Gracefully manages GDELT rate limits (429) by skipping throttled categories without crashing.
-
-**Response Example:**
+**Data Example:**
 ```json
 [
   {
     "id": "evt-1-1705600000000",
-    "source": "GDELT",
+    "source": "GDELT Network",
     "eventType": "conflict",
-    "lat": 48.3794,
-    "lon": 31.1656,
-    "actor1Name": "Russia",
-    "actor2Name": "Ukraine",
-    "casualties": "500k*",
-    "intensity": "High Intensity",
-    "date": "2025-01-18T10:30:00Z"
+    "location": { "lat": 48.3794, "lon": 31.1656 },
+    "actors": { "primary": "Russia", "target": "Ukraine" },
+    "intensity": "High",
+    "timestamp": "2025-01-18T10:30:00Z"
   }
 ]
 ```
@@ -181,26 +164,12 @@ Server-side endpoint that acts as a proxy and data processor:
 
 ```
 Risiko-IRL/
-├── 📂 public/
-│   └── 📂 img/            # Screenshots
+├── 📂 public/          # Static assets
 ├── 📂 src/
-│   ├── 📂 app/
-│   │   ├── 📂 api/
-│   │   │   └── 📂 conflicts/
-│   │   │       └── route.ts    # Main API logic & Data Processing
-│   │   ├── icon.tsx            # Dynamic Favicon Generation
-│   │   ├── globals.css         # Global Styles
-│   │   ├── layout.tsx          # Root Layout
-│   │   └── page.tsx            # Main Dashboard (Responsive)
-│   ├── 📂 components/
-│   │   └── 📂 map/
-│   │       ├── RiskMap.tsx     # Interactive Map Component
-│   │       └── EventMarker.tsx # Custom Markers
-│   └── 📂 lib/
-│       ├── gdelt.ts            # Data Types
-│       └── utils.ts            # Helpers
+│   ├── 📂 app/         # Next.js App Router pages & API
+│   ├── 📂 components/  # Reusable UI components
+│   └── 📂 lib/         # Utilities and API clients
 ├── package.json
-├── next.config.ts
 └── README.md
 ```
 
@@ -208,8 +177,8 @@ Risiko-IRL/
 
 <div align="center">
 
-**⚔️ RISIKO IRL - The World in Real-Time ⚔️**
+**RISIKO IRL**
 
-*Developed by Diego Scirocco*
+*Diego Scirocco*
 
 </div>
