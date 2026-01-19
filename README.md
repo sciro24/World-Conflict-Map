@@ -25,11 +25,6 @@
 
 *Interactive world map with distinct continental coloring and real-time conflict feed*
 
-### Conflict Details
-<img src="./img/screenshot_popup.png" alt="Conflict Details Popup" width="600" />
-
-*Detail view showing incident specifics, location data, and context*
-
 ### Mobile Experience
 <img src="./img/screenshot_mobile.png" alt="Mobile Responsive View" width="300" />
 
