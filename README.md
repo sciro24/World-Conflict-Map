@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🎯 RISIKO IRL
+# 🎯 WORLD CONFLICT MAP
 
 ### Real-Time Global Conflict Monitor
 
@@ -21,7 +21,7 @@
 <div align="center">
 
 ### Main Dashboard
-<img src="./img/screenshot_main.png" alt="Risiko IRL Dashboard" width="800" />
+<img src="./img/screenshot_main.png" alt="World Conflict Map Dashboard" width="800" />
 
 *Interactive world map with distinct continental coloring and real-time conflict feed*
 
@@ -41,9 +41,9 @@
 
 ## 🌟 Overview
 
-🔴 **LIVE DEMO:** [risiko-irl.vercel.app](https://risiko-irl.vercel.app)
+🔴 **LIVE DEMO:** [world-conflict-map.vercel.app](https://world-conflict-map.vercel.app)
 
-**RISIKO IRL** is a web-based dashboard designed to visualize global geopolitical events and conflicts in real-time. By leveraging data from the [GDELT Project](https://www.gdeltproject.org/), the application provides an accessible interface to monitor international developments, offering a clear graphical representation of active conflict zones.
+**WORLD CONFLICT MAP** is a web-based dashboard designed to visualize global geopolitical events and conflicts in real-time. By leveraging data from the [GDELT Project](https://www.gdeltproject.org/), the application provides an accessible interface to monitor international developments, offering a clear graphical representation of active conflict zones.
 
 The project visualizes complex global data through high-contrast, region-based color coding to facilitate rapid understanding of geopolitical dynamics.
 
@@ -79,7 +79,7 @@ Data is organized visually by continent, using a distinct color palette to easil
 - **Directional Markers**: Visual indicators showing the directional flow of events where applicable.
 - **Contextual Information**: Detailed popups providing source links, intensity levels, and actors involved.
 
-### � Real-Time Intelligence
+### 📡 Real-Time Intelligence
 - **Live Feed System**: Chronological list of events updated frequently.
 - **Robust API Integration**: Handles large datasets and API constraints efficiently.
 - **Source Verification**: Direct links to original news sources for independent verification.
@@ -97,10 +97,10 @@ Data is organized visually by continent, using a distinct color palette to easil
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/yourusername/Risiko-IRL.git
+git clone https://github.com/yourusername/world-conflict-map.git
 
 # 2. Enter directory
-cd Risiko-IRL
+cd world-conflict-map
 
 # 3. Install dependencies
 npm install --legacy-peer-deps
@@ -163,7 +163,7 @@ The application processes data from the **Global Database of Events, Language, a
 ## 📁 Project Structure
 
 ```
-Risiko-IRL/
+world-conflict-map/
 ├── 📂 public/          # Static assets
 ├── 📂 src/
 │   ├── 📂 app/         # Next.js App Router pages & API
@@ -177,7 +177,7 @@ Risiko-IRL/
 
 <div align="center">
 
-**RISIKO IRL**
+**WORLD CONFLICT MAP**
 
 *Diego Scirocco*
 

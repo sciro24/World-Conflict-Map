@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "RISIKO IRL | Global Conflict Monitor",
+  title: "World Conflict Map | Real-Time Conflict Monitor",
   description: "Real-time global conflict tracking with GDELT data.",
 };
 

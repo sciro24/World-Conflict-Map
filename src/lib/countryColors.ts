@@ -1,7 +1,5 @@
-// Risiko-style colors for continents and nations
-
-// Colori dei continenti come richiesto
-export const RISIKO_CONTINENT_COLORS = {
+// Continent colors
+export const CONTINENT_COLORS = {
     EUROPE: "#3b82f6",        // Blu (Blue)
     ASIA: "#22c55e",          // Verde (Green)
     NORTH_AMERICA: "#f97316", // Arancione

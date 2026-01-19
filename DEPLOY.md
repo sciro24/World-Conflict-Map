@@ -1,4 +1,4 @@
-# Deploying RISIKO IRL to Vercel
+# Deploying World Conflict Map to Vercel
 
 This project is built with Next.js and is optimized for Vercel deployment.
 

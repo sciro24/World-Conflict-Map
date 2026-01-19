@@ -8,8 +8,8 @@ import { Swords, Megaphone, Zap, Skull, AlertTriangle, Flame } from "lucide-reac
 
 const geoUrl = "https://unpkg.com/world-atlas@2.0.2/countries-110m.json"
 
-// Risiko colors per continent
-const RISIKO_COLORS = {
+// Continent colors
+const CONTINENT_COLORS = {
     EUROPE: "#3b82f6",      // Blue
     ASIA: "#22c55e",        // Green  
     NORTH_AMERICA: "#f97316", // Orange
@@ -19,7 +19,7 @@ const RISIKO_COLORS = {
 } as const;
 
 // COMPLETE mapping of ALL countries to continents
-const COUNTRY_TO_CONTINENT: Record<string, keyof typeof RISIKO_COLORS> = {
+const COUNTRY_TO_CONTINENT: Record<string, keyof typeof CONTINENT_COLORS> = {
     "Albania": "EUROPE", "Andorra": "EUROPE", "Austria": "EUROPE", "Belarus": "EUROPE",
     "Belgium": "EUROPE", "Bosnia and Herzegovina": "EUROPE", "Bosnia and Herz.": "EUROPE",
     "Bulgaria": "EUROPE", "Croatia": "EUROPE", "Cyprus": "EUROPE", "Czech Republic": "EUROPE",
@@ -89,7 +89,7 @@ const COUNTRY_TO_CONTINENT: Record<string, keyof typeof RISIKO_COLORS> = {
 };
 
 // Determine continent by coordinates for unmapped countries
-function getContinentByCoordinates(lat: number, lon: number): keyof typeof RISIKO_COLORS {
+function getContinentByCoordinates(lat: number, lon: number): keyof typeof CONTINENT_COLORS {
     // Europe
     if (lat > 35 && lat < 72 && lon > -25 && lon < 40) return "EUROPE";
     // Asia (including Russia)
@@ -143,7 +143,7 @@ interface EventPopupData {
     y: number;
 }
 
-export function RiskMap({ conflicts, center, zoom, selectedConflictId }: MapProps) {
+export function ConflictMap({ conflicts, center, zoom, selectedConflictId }: MapProps) {
     const [selectedEvent, setSelectedEvent] = useState<EventPopupData | null>(null);
     const mapRef = useRef<HTMLDivElement>(null);
 
@@ -211,7 +211,7 @@ export function RiskMap({ conflicts, center, zoom, selectedConflictId }: MapProp
             }
         }
 
-        return RISIKO_COLORS[continent || "EUROPE"];
+        return CONTINENT_COLORS[continent || "EUROPE"];
     };
 
     // Check if country is involved in events

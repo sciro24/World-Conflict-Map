@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState, useMemo } from "react"
-import { RiskMap } from "@/components/map/RiskMap"
+import { ConflictMap } from "@/components/map/ConflictMap"
 import { fetchConflictData, type ConflictEvent } from "@/lib/gdelt"
 import { RefreshCw, AlertTriangle, Clock, MapPin, ExternalLink, Filter, SortAsc, Swords, Megaphone, Zap, Skull, ShieldAlert, Flame, ChevronLeft, ChevronRight, Plus, Minus } from "lucide-react"
 
@@ -125,8 +125,8 @@ export default function Home() {
         {/* Header */}
         <div className="p-6 border-b border-border bg-gradient-to-r from-red-950/30 to-transparent">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-black tracking-tighter text-red-500 flex items-center gap-2">
-              RISIKO <span className="text-white">IRL</span>
+            <h1 className="text-xl font-black tracking-tighter text-red-500 flex items-center gap-2">
+              WORLD <span className="text-white">CONFLICT MAP</span>
             </h1>
             {/* Mobile Close Button */}
             <button
@@ -370,7 +370,7 @@ export default function Home() {
         </div>
 
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-slate-900/50 via-black to-black pointer-events-none z-0" />
-        <RiskMap
+        <ConflictMap
           conflicts={conflicts}
           center={mapCenter}
           zoom={mapZoom}
